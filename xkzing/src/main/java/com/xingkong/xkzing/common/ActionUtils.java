@@ -60,9 +60,9 @@ public class ActionUtils {
      * @param width 裁剪后宽度(px)
      * @param height 裁剪后高度(px)
      */
-    private void startActivityForImageCut(Activity activity, int requestCode,
-                                          Uri inputUri, Uri outputUri,
-                                          int width, int height) {
+    public static void startActivityForImageCut(Activity activity, int requestCode,
+                                                Uri inputUri, Uri outputUri,
+                                                int width, int height) {
         Intent intent = new Intent("com.android.camera.action.CROP");
         intent.setDataAndType(inputUri, "image/*");
         // 下面这个crop=true是设置在开启的Intent中设置显示的VIEW可裁剪
