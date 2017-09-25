@@ -24,6 +24,7 @@ import com.google.zxing.FormatException;
 import com.google.zxing.NotFoundException;
 import com.google.zxing.RGBLuminanceSource;
 import com.google.zxing.Result;
+import com.google.zxing.WriterException;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.QRCodeReader;
 import com.hss01248.dialog.StyledDialog;
@@ -32,9 +33,12 @@ import com.xingkong.xkzing.CaptureActivity;
 import com.xingkong.xkzing.common.ActionUtils;
 import com.xingkong.xkzing.common.QrUtils;
 import com.xingkong.xkzing.zxing.decoding.InactivityTimer;
+import com.xingkong.xkzing.zxing.encoding.EncodingHandler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.xingkong.xcode.R.id.btn_add_qrcode;
 import static com.xingkong.xkzing.common.ActionUtils.PHOTO_REQUEST_GALLERY;
@@ -81,18 +85,9 @@ public class MainActivity extends AppCompatActivity {
              /*   ActionUtils.startActivityForImageCut(MainActivity.this, PHOTO_REQUEST_CUT,
                         Uri.parse(Environment.getExternalStorageDirectory() + "/Picture"),
                         Uri.parse(Environment.getExternalStorageDirectory() + "/image.jpg"), 300, 300);
-                String contentString = qrStrEditText.getText().toString();*/
+               */
                 ;
-            /*    if (!contentString.equals("")) {
-                    //根据字符串生成二维码图片并显示在界面上，第二个参数为图片的大小（350*350）
-                    Bitmap qrCodeBitmap = EncodingUtils.createQRCode(contentString, 350, 350,
-                            mCheckBox.isChecked() ?
-                                    BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher) :
-                                    null);
-                    qrImgImageView.setImageBitmap(qrCodeBitmap);
-                } else {
-                    Toast.makeText(MainActivity.this, "Text can not be empty", Toast.LENGTH_SHORT).show();
-                }*/
+
             }
         });
         qrImgImageView.setOnLongClickListener(new View.OnLongClickListener() {
@@ -133,6 +128,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 显示弹窗
+     *
+     * @param obmp
+     */
     private void showSelectAlert(final Bitmap obmp) {
         StyledDialog.buildBottomItemDialog(index, null, new MyItemDialogListener() {
             @Override
@@ -149,12 +149,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Handler scan result
+     * 识别的结果
      *
      * @param result
      * @param barcode
      */
     public void handleDecode(Result result, Bitmap barcode) {
+
         inactivityTimer.onActivity();
         String resultString = result.getText();
 
@@ -166,6 +167,52 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         inactivityTimer.shutdown();
         super.onDestroy();
+    }
+
+    /**
+     * 生成二维码
+     *
+     * @param view
+     */
+    public void creatQR(View view) {
+        String contentString = qrStrEditText.getText().toString();
+        if (!contentString.equals("")) {
+            //根据字符串生成二维码图片并显示在界面上，第二个参数为图片的大小（350*350）
+            Bitmap qrCodeBitmap = null;
+
+            if (mCheckBox.isChecked()) {
+                qrCodeBitmap = EncodingHandler.createQRCode(contentString, 350, 350,
+                        BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
+            } else {
+                try {
+                    qrCodeBitmap = EncodingHandler.createQRCode(contentString, 350);
+                } catch (WriterException e) {
+                    e.printStackTrace();
+                }
+            }
+            qrImgImageView.setImageBitmap(qrCodeBitmap);
+        } else {
+            Toast.makeText(MainActivity.this, "Text can not be empty", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * 生成条形码
+     *
+     * @param view
+     */
+    public void createBar(View view) {
+        String contentString = qrStrEditText.getText().toString();
+        if (!contentString.equals("") && isNumeric(contentString)) {
+            //根据字符串生成二维码图片并显示在界面上，第二个参数为图片的大小（350*350）
+            Bitmap qrCodeBitmap = null;
+            qrCodeBitmap = EncodingHandler.creatBarcode(this, contentString, 750, 350, true);
+            qrImgImageView.setImageBitmap(qrCodeBitmap);
+        } else if (!isNumeric(contentString)) {
+            Toast.makeText(this, "条形码只能是数字", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(MainActivity.this, "Text can not be empty", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -195,5 +242,20 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
+    }
+
+    /**
+     * 数字的判断
+     *
+     * @param str
+     * @return
+     */
+    public boolean isNumeric(String str) {
+        Pattern pattern = Pattern.compile("[0-9]*");
+        Matcher isNum = pattern.matcher(str);
+        if (!isNum.matches()) {
+            return false;
+        }
+        return true;
     }
 }
